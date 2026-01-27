@@ -44,6 +44,9 @@ public class EventService {
 	}
 
 	public List<EventShortDto> getUserEvents(Long userId, Integer from, Integer size) {
+		if (size <= 0) {
+			throw new BadRequestException("Size must be greater than 0");
+		}
 		Pageable pageable = PageRequest.of(from / size, size);
 		Page<Event> events = eventRepository.findByInitiatorId(userId, pageable);
 		return events.getContent().stream()
@@ -119,14 +122,20 @@ public class EventService {
 
 	public List<EventFullDto> getAdminEvents(List<Long> users, List<String> states, List<Long> categories,
 	                                         String rangeStart, String rangeEnd, Integer from, Integer size) {
+		if (size <= 0) {
+			throw new BadRequestException("Size must be greater than 0");
+		}
 		Pageable pageable = PageRequest.of(from / size, size);
-		List<EventState> eventStates = states != null ? states.stream()
+		List<EventState> eventStates = (states != null && !states.isEmpty()) ? states.stream()
 				.map(EventState::valueOf)
 				.collect(Collectors.toList()) : null;
 		LocalDateTime start = rangeStart != null ? LocalDateTime.parse(rangeStart, FORMATTER) : null;
 		LocalDateTime end = rangeEnd != null ? LocalDateTime.parse(rangeEnd, FORMATTER) : null;
 
-		Page<Event> events = eventRepository.findEventsByAdminFilters(users, eventStates, categories, start, end, pageable);
+		List<Long> usersList = (users != null && !users.isEmpty()) ? users : null;
+		List<Long> categoriesList = (categories != null && !categories.isEmpty()) ? categories : null;
+
+		Page<Event> events = eventRepository.findEventsByAdminFilters(usersList, eventStates, categoriesList, start, end, pageable);
 		return events.getContent().stream()
 				.map(event -> {
 					Long confirmedRequests = participationRequestRepository.countConfirmedRequestsByEventId(event.getId());
@@ -164,6 +173,9 @@ public class EventService {
 	public List<EventShortDto> getPublicEvents(String text, List<Long> categories, Boolean paid,
 	                                           String rangeStart, String rangeEnd, Boolean onlyAvailable,
 	                                           String sort, Integer from, Integer size) {
+		if (size <= 0) {
+			throw new BadRequestException("Size must be greater than 0");
+		}
 		Pageable pageable;
 		if ("EVENT_DATE".equals(sort)) {
 			pageable = PageRequest.of(from / size, size, Sort.by("eventDate"));
@@ -179,7 +191,9 @@ public class EventService {
 			start = LocalDateTime.now();
 		}
 
-		Page<Event> events = eventRepository.findPublicEvents(text, categories, paid, start, end, onlyAvailable, pageable);
+		List<Long> categoriesList = (categories != null && !categories.isEmpty()) ? categories : null;
+
+		Page<Event> events = eventRepository.findPublicEvents(text, categoriesList, paid, start, end, onlyAvailable, pageable);
 		return events.getContent().stream()
 				.map(event -> {
 					Long confirmedRequests = participationRequestRepository.countConfirmedRequestsByEventId(event.getId());
@@ -198,17 +212,17 @@ public class EventService {
 	}
 
 	private void updateEventFields(Event event, ru.practicum.main.dto.UpdateEventUserRequest dto) {
-		if (dto.getAnnotation() != null) {
+		if (dto.getAnnotation() != null && !dto.getAnnotation().trim().isEmpty()) {
 			event.setAnnotation(dto.getAnnotation());
 		}
 		if (dto.getCategory() != null) {
 			Category category = categoryService.findCategoryById(dto.getCategory());
 			event.setCategory(category);
 		}
-		if (dto.getDescription() != null) {
+		if (dto.getDescription() != null && !dto.getDescription().trim().isEmpty()) {
 			event.setDescription(dto.getDescription());
 		}
-		if (dto.getEventDate() != null) {
+		if (dto.getEventDate() != null && !dto.getEventDate().trim().isEmpty()) {
 			LocalDateTime eventDate = LocalDateTime.parse(dto.getEventDate(), FORMATTER);
 			if (eventDate.isBefore(LocalDateTime.now().plusHours(2))) {
 				throw new BadRequestException("Field: eventDate. Error: должно содержать дату, которая еще не наступила. Value: " + dto.getEventDate());
@@ -227,23 +241,23 @@ public class EventService {
 		if (dto.getRequestModeration() != null) {
 			event.setRequestModeration(dto.getRequestModeration());
 		}
-		if (dto.getTitle() != null) {
+		if (dto.getTitle() != null && !dto.getTitle().trim().isEmpty()) {
 			event.setTitle(dto.getTitle());
 		}
 	}
 
 	private void updateEventFields(Event event, ru.practicum.main.dto.UpdateEventAdminRequest dto) {
-		if (dto.getAnnotation() != null) {
+		if (dto.getAnnotation() != null && !dto.getAnnotation().trim().isEmpty()) {
 			event.setAnnotation(dto.getAnnotation());
 		}
 		if (dto.getCategory() != null) {
 			Category category = categoryService.findCategoryById(dto.getCategory());
 			event.setCategory(category);
 		}
-		if (dto.getDescription() != null) {
+		if (dto.getDescription() != null && !dto.getDescription().trim().isEmpty()) {
 			event.setDescription(dto.getDescription());
 		}
-		if (dto.getEventDate() != null) {
+		if (dto.getEventDate() != null && !dto.getEventDate().trim().isEmpty()) {
 			LocalDateTime eventDate = LocalDateTime.parse(dto.getEventDate(), FORMATTER);
 			if (event.getPublishedOn() != null && eventDate.isBefore(event.getPublishedOn().plusHours(1))) {
 				throw new ConflictException("Cannot change event date because it's less than 1 hour before publication");
@@ -262,7 +276,7 @@ public class EventService {
 		if (dto.getRequestModeration() != null) {
 			event.setRequestModeration(dto.getRequestModeration());
 		}
-		if (dto.getTitle() != null) {
+		if (dto.getTitle() != null && !dto.getTitle().trim().isEmpty()) {
 			event.setTitle(dto.getTitle());
 		}
 	}

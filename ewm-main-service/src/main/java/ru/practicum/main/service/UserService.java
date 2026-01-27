@@ -6,6 +6,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.main.dto.UserDto;
+import ru.practicum.main.exception.BadRequestException;
 import ru.practicum.main.exception.ConflictException;
 import ru.practicum.main.exception.NotFoundException;
 import ru.practicum.main.mapper.UserMapper;
@@ -26,6 +27,9 @@ public class UserService {
 	}
 
 	public List<UserDto> getUsers(List<Long> ids, Integer from, Integer size) {
+		if (size <= 0) {
+			throw new BadRequestException("Size must be greater than 0");
+		}
 		Pageable pageable = PageRequest.of(from / size, size);
 		Page<User> users;
 		if (ids != null && !ids.isEmpty()) {

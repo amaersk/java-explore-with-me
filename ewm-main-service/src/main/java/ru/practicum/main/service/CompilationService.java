@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.main.dto.CompilationDto;
 import ru.practicum.main.dto.EventShortDto;
+import ru.practicum.main.exception.BadRequestException;
 import ru.practicum.main.exception.NotFoundException;
 import ru.practicum.main.mapper.CompilationMapper;
 import ru.practicum.main.mapper.EventMapper;
@@ -38,6 +39,9 @@ public class CompilationService {
 	}
 
 	public List<CompilationDto> getCompilations(Boolean pinned, Integer from, Integer size) {
+		if (size <= 0) {
+			throw new BadRequestException("Size must be greater than 0");
+		}
 		Pageable pageable = PageRequest.of(from / size, size);
 		Page<Compilation> compilations;
 		if (pinned != null) {
@@ -95,15 +99,19 @@ public class CompilationService {
 	public CompilationDto updateCompilation(Long compId, ru.practicum.main.dto.UpdateCompilationRequest dto) {
 		Compilation compilation = findCompilationById(compId);
 
-		if (dto.getTitle() != null) {
+		if (dto.getTitle() != null && !dto.getTitle().trim().isEmpty()) {
 			compilation.setTitle(dto.getTitle());
 		}
 		if (dto.getPinned() != null) {
 			compilation.setPinned(dto.getPinned());
 		}
 		if (dto.getEvents() != null) {
-			List<Event> events = eventRepository.findByIdIn(dto.getEvents());
-			compilation.setEvents(new java.util.HashSet<>(events));
+			if (dto.getEvents().isEmpty()) {
+				compilation.setEvents(new java.util.HashSet<>());
+			} else {
+				List<Event> events = eventRepository.findByIdIn(dto.getEvents());
+				compilation.setEvents(new java.util.HashSet<>(events));
+			}
 		}
 
 		Compilation saved = compilationRepository.save(compilation);

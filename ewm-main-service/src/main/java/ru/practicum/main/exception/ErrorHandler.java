@@ -78,6 +78,19 @@ public class ErrorHandler {
 		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
 	}
 
+	@ExceptionHandler(Exception.class)
+	public ResponseEntity<ErrorResponse> handleException(Exception ex) {
+		ErrorResponse errorResponse = new ErrorResponse(
+				"500 INTERNAL_SERVER_ERROR",
+				"Internal server error.",
+				ex.getMessage() != null ? ex.getMessage() : "An unexpected error occurred",
+				LocalDateTime.now().format(FORMATTER),
+				new ArrayList<>()
+		);
+		ex.printStackTrace();
+		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+	}
+
 	public static class ErrorResponse {
 		private String status;
 		private String reason;
