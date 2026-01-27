@@ -15,7 +15,6 @@ public class UpdateEventAdminRequest {
 
 	private String eventDate;
 
-	@Valid
 	private LocationDto location;
 
 	private Boolean paid;
