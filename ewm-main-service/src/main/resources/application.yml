@@ -12,6 +12,10 @@ spring:
       hibernate:
         format_sql: true
     open-in-view: false
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+      - org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration
   jackson:
     date-format: yyyy-MM-dd HH:mm:ss
     serialization:
