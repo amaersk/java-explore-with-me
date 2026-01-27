@@ -1,7 +1,12 @@
 package ru.practicum.main.dto;
 
+import jakarta.validation.constraints.NotNull;
+
 public class LocationDto {
+	@NotNull
 	private Float lat;
+
+	@NotNull
 	private Float lon;
 
 	public Float getLat() {

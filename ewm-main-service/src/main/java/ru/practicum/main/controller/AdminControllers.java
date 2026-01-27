@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import jakarta.validation.Valid;
 import ru.practicum.main.dto.CategoryDto;
 import ru.practicum.main.dto.CompilationDto;
 import ru.practicum.main.dto.EventFullDto;
@@ -28,7 +29,7 @@ import ru.practicum.main.dto.UserDto;
 public class AdminControllers {
 
 	@PostMapping("/categories")
-	public ResponseEntity<CategoryDto> addCategory(@RequestBody NewCategoryDto newCategoryDto) {
+	public ResponseEntity<CategoryDto> addCategory(@Valid @RequestBody NewCategoryDto newCategoryDto) {
 		return ResponseEntity.status(HttpStatus.CREATED).body(new CategoryDto());
 	}
 
@@ -39,12 +40,12 @@ public class AdminControllers {
 
 	@PatchMapping("/categories/{catId}")
 	public ResponseEntity<CategoryDto> updateCategory(@PathVariable("catId") Long catId,
-	                                                  @RequestBody CategoryDto categoryDto) {
+	                                                  @Valid @RequestBody CategoryDto categoryDto) {
 		return ResponseEntity.ok(new CategoryDto());
 	}
 
 	@PostMapping("/compilations")
-	public ResponseEntity<CompilationDto> saveCompilation(@RequestBody NewCompilationDto dto) {
+	public ResponseEntity<CompilationDto> saveCompilation(@Valid @RequestBody NewCompilationDto dto) {
 		return ResponseEntity.status(HttpStatus.CREATED).body(new CompilationDto());
 	}
 
@@ -55,7 +56,7 @@ public class AdminControllers {
 
 	@PatchMapping("/compilations/{compId}")
 	public ResponseEntity<CompilationDto> updateCompilation(@PathVariable("compId") Long compId,
-	                                                        @RequestBody UpdateCompilationRequest dto) {
+	                                                        @Valid @RequestBody UpdateCompilationRequest dto) {
 		return ResponseEntity.ok(new CompilationDto());
 	}
 
@@ -84,7 +85,7 @@ public class AdminControllers {
 	}
 
 	@PostMapping("/users")
-	public ResponseEntity<UserDto> registerUser(@RequestBody NewUserRequest dto) {
+	public ResponseEntity<UserDto> registerUser(@Valid @RequestBody NewUserRequest dto) {
 		return ResponseEntity.status(HttpStatus.CREATED).body(new UserDto());
 	}
 

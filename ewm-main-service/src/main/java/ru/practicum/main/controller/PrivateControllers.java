@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import jakarta.validation.Valid;
 import ru.practicum.main.dto.EventFullDto;
 import ru.practicum.main.dto.EventRequestStatusUpdateRequest;
 import ru.practicum.main.dto.EventRequestStatusUpdateResult;
@@ -33,7 +34,7 @@ public class PrivateControllers {
 
 	@PostMapping("/events")
 	public ResponseEntity<EventFullDto> addEvent(@PathVariable("userId") Long userId,
-	                                             @RequestBody NewEventDto dto) {
+	                                             @Valid @RequestBody NewEventDto dto) {
 		return ResponseEntity.status(HttpStatus.CREATED).body(new EventFullDto());
 	}
 
@@ -46,7 +47,7 @@ public class PrivateControllers {
 	@PatchMapping("/events/{eventId}")
 	public ResponseEntity<EventFullDto> updateEvent(@PathVariable("userId") Long userId,
 	                                                @PathVariable("eventId") Long eventId,
-	                                                @RequestBody UpdateEventUserRequest dto) {
+	                                                @Valid @RequestBody UpdateEventUserRequest dto) {
 		return ResponseEntity.ok(new EventFullDto());
 	}
 
