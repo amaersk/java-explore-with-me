@@ -16,7 +16,6 @@ import ru.practicum.main.repository.CompilationRepository;
 import ru.practicum.main.repository.EventRepository;
 import ru.practicum.main.repository.ParticipationRequestRepository;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service

@@ -68,7 +68,7 @@ public class EventService {
 		User user = userService.findUserById(userId);
 		Category category = categoryService.findCategoryById(dto.getCategory());
 		LocalDateTime eventDate = LocalDateTime.parse(dto.getEventDate(), FORMATTER);
-		
+
 		if (eventDate.isBefore(LocalDateTime.now().plusHours(2))) {
 			throw new BadRequestException("Field: eventDate. Error: должно содержать дату, которая еще не наступила. Value: " + dto.getEventDate());
 		}
