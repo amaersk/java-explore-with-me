@@ -26,17 +26,17 @@ public class StatsFilter extends OncePerRequestFilter {
 	}
 
 	@Override
-	protected void doFilterInternal(@NonNull HttpServletRequest request, 
-	                                @NonNull HttpServletResponse response, 
+	protected void doFilterInternal(@NonNull HttpServletRequest request,
+	                                @NonNull HttpServletResponse response,
 	                                @NonNull FilterChain filterChain)
 			throws ServletException, IOException {
 		filterChain.doFilter(request, response);
-		
+
 		if (shouldTrack(request)) {
 			String uri = request.getRequestURI();
 			String ip = getClientIp(request);
 			LocalDateTime timestamp = LocalDateTime.now();
-			
+
 			CompletableFuture.runAsync(() -> {
 				try {
 					statsClient.sendHit(APP_NAME, uri, ip, timestamp);
@@ -50,10 +50,10 @@ public class StatsFilter extends OncePerRequestFilter {
 	private boolean shouldTrack(HttpServletRequest request) {
 		String method = request.getMethod();
 		String path = request.getRequestURI();
-		
-		return "GET".equals(method) && 
-			   (path.startsWith("/events") || 
-			    path.startsWith("/compilations") || 
+
+		return "GET".equals(method) &&
+			   (path.startsWith("/events") ||
+			    path.startsWith("/compilations") ||
 			    path.startsWith("/categories"));
 	}
 
@@ -62,12 +62,12 @@ public class StatsFilter extends OncePerRequestFilter {
 		if (xForwardedFor != null && !xForwardedFor.isEmpty()) {
 			return xForwardedFor.split(",")[0].trim();
 		}
-		
+
 		String xRealIp = request.getHeader("X-Real-IP");
 		if (xRealIp != null && !xRealIp.isEmpty()) {
 			return xRealIp;
 		}
-		
+
 		return request.getRemoteAddr();
 	}
 }
