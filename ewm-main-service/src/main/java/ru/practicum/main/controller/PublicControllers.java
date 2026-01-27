@@ -1,6 +1,5 @@
 package ru.practicum.main.controller;
 
-import java.util.Collections;
 import java.util.List;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -12,32 +11,45 @@ import ru.practicum.main.dto.CategoryDto;
 import ru.practicum.main.dto.CompilationDto;
 import ru.practicum.main.dto.EventFullDto;
 import ru.practicum.main.dto.EventShortDto;
+import ru.practicum.main.service.CategoryService;
+import ru.practicum.main.service.CompilationService;
+import ru.practicum.main.service.EventService;
 
 @RestController
 @RequestMapping
 public class PublicControllers {
+	private final CategoryService categoryService;
+	private final CompilationService compilationService;
+	private final EventService eventService;
+
+	public PublicControllers(CategoryService categoryService, CompilationService compilationService,
+	                         EventService eventService) {
+		this.categoryService = categoryService;
+		this.compilationService = compilationService;
+		this.eventService = eventService;
+	}
 
 	@GetMapping("/categories")
 	public List<CategoryDto> getCategories(@RequestParam(value = "from", defaultValue = "0") Integer from,
 	                                       @RequestParam(value = "size", defaultValue = "10") Integer size) {
-		return Collections.emptyList();
+		return categoryService.getCategories(from, size);
 	}
 
 	@GetMapping("/categories/{catId}")
 	public ResponseEntity<CategoryDto> getCategory(@PathVariable("catId") Long catId) {
-		return ResponseEntity.ok(new CategoryDto());
+		return ResponseEntity.ok(categoryService.getCategory(catId));
 	}
 
 	@GetMapping("/compilations")
 	public List<CompilationDto> getCompilations(@RequestParam(value = "pinned", required = false) Boolean pinned,
 	                                            @RequestParam(value = "from", defaultValue = "0") Integer from,
 	                                            @RequestParam(value = "size", defaultValue = "10") Integer size) {
-		return Collections.emptyList();
+		return compilationService.getCompilations(pinned, from, size);
 	}
 
 	@GetMapping("/compilations/{compId}")
 	public ResponseEntity<CompilationDto> getCompilation(@PathVariable("compId") Long compId) {
-		return ResponseEntity.ok(new CompilationDto());
+		return ResponseEntity.ok(compilationService.getCompilation(compId));
 	}
 
 	@GetMapping("/events")
@@ -50,12 +62,12 @@ public class PublicControllers {
 	                                     @RequestParam(value = "sort", required = false) String sort,
 	                                     @RequestParam(value = "from", defaultValue = "0") Integer from,
 	                                     @RequestParam(value = "size", defaultValue = "10") Integer size) {
-		return Collections.emptyList();
+		return eventService.getPublicEvents(text, categories, paid, rangeStart, rangeEnd, onlyAvailable, sort, from, size);
 	}
 
 	@GetMapping("/events/{id}")
 	public ResponseEntity<EventFullDto> getEvent(@PathVariable("id") Long id) {
-		return ResponseEntity.ok(new EventFullDto());
+		return ResponseEntity.ok(eventService.getPublicEvent(id));
 	}
 }
 

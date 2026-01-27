@@ -1,6 +1,5 @@
 package ru.practicum.main.controller;
 
-import java.util.Collections;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,41 +22,59 @@ import ru.practicum.main.dto.NewUserRequest;
 import ru.practicum.main.dto.UpdateCompilationRequest;
 import ru.practicum.main.dto.UpdateEventAdminRequest;
 import ru.practicum.main.dto.UserDto;
+import ru.practicum.main.service.CategoryService;
+import ru.practicum.main.service.CompilationService;
+import ru.practicum.main.service.EventService;
+import ru.practicum.main.service.UserService;
 
 @RestController
 @RequestMapping("/admin")
 public class AdminControllers {
+	private final UserService userService;
+	private final CategoryService categoryService;
+	private final EventService eventService;
+	private final CompilationService compilationService;
+
+	public AdminControllers(UserService userService, CategoryService categoryService,
+	                       EventService eventService, CompilationService compilationService) {
+		this.userService = userService;
+		this.categoryService = categoryService;
+		this.eventService = eventService;
+		this.compilationService = compilationService;
+	}
 
 	@PostMapping("/categories")
 	public ResponseEntity<CategoryDto> addCategory(@Valid @RequestBody NewCategoryDto newCategoryDto) {
-		return ResponseEntity.status(HttpStatus.CREATED).body(new CategoryDto());
+		return ResponseEntity.status(HttpStatus.CREATED).body(categoryService.createCategory(newCategoryDto));
 	}
 
 	@DeleteMapping("/categories/{catId}")
 	public ResponseEntity<Void> deleteCategory(@PathVariable("catId") Long catId) {
+		categoryService.deleteCategory(catId);
 		return ResponseEntity.noContent().build();
 	}
 
 	@PatchMapping("/categories/{catId}")
 	public ResponseEntity<CategoryDto> updateCategory(@PathVariable("catId") Long catId,
 	                                                  @Valid @RequestBody CategoryDto categoryDto) {
-		return ResponseEntity.ok(new CategoryDto());
+		return ResponseEntity.ok(categoryService.updateCategory(catId, categoryDto));
 	}
 
 	@PostMapping("/compilations")
 	public ResponseEntity<CompilationDto> saveCompilation(@Valid @RequestBody NewCompilationDto dto) {
-		return ResponseEntity.status(HttpStatus.CREATED).body(new CompilationDto());
+		return ResponseEntity.status(HttpStatus.CREATED).body(compilationService.createCompilation(dto));
 	}
 
 	@DeleteMapping("/compilations/{compId}")
 	public ResponseEntity<Void> deleteCompilation(@PathVariable("compId") Long compId) {
+		compilationService.deleteCompilation(compId);
 		return ResponseEntity.noContent().build();
 	}
 
 	@PatchMapping("/compilations/{compId}")
 	public ResponseEntity<CompilationDto> updateCompilation(@PathVariable("compId") Long compId,
 	                                                        @Valid @RequestBody UpdateCompilationRequest dto) {
-		return ResponseEntity.ok(new CompilationDto());
+		return ResponseEntity.ok(compilationService.updateCompilation(compId, dto));
 	}
 
 	@GetMapping("/events")
@@ -68,29 +85,30 @@ public class AdminControllers {
 	                                    @RequestParam(value = "rangeEnd", required = false) String rangeEnd,
 	                                    @RequestParam(value = "from", defaultValue = "0") Integer from,
 	                                    @RequestParam(value = "size", defaultValue = "10") Integer size) {
-		return Collections.emptyList();
+		return eventService.getAdminEvents(users, states, categories, rangeStart, rangeEnd, from, size);
 	}
 
 	@PatchMapping("/events/{eventId}")
 	public ResponseEntity<EventFullDto> updateEvent(@PathVariable("eventId") Long eventId,
 	                                                @Valid @RequestBody UpdateEventAdminRequest dto) {
-		return ResponseEntity.ok(new EventFullDto());
+		return ResponseEntity.ok(eventService.updateEventByAdmin(eventId, dto));
 	}
 
 	@GetMapping("/users")
 	public List<UserDto> getUsers(@RequestParam(value = "ids", required = false) List<Long> ids,
 	                              @RequestParam(value = "from", defaultValue = "0") Integer from,
 	                              @RequestParam(value = "size", defaultValue = "10") Integer size) {
-		return Collections.emptyList();
+		return userService.getUsers(ids, from, size);
 	}
 
 	@PostMapping("/users")
 	public ResponseEntity<UserDto> registerUser(@Valid @RequestBody NewUserRequest dto) {
-		return ResponseEntity.status(HttpStatus.CREATED).body(new UserDto());
+		return ResponseEntity.status(HttpStatus.CREATED).body(userService.createUser(dto));
 	}
 
 	@DeleteMapping("/users/{userId}")
 	public ResponseEntity<Void> deleteUser(@PathVariable("userId") Long userId) {
+		userService.deleteUser(userId);
 		return ResponseEntity.noContent().build();
 	}
 }

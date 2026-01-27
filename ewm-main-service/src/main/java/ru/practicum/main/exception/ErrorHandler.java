@@ -42,6 +42,42 @@ public class ErrorHandler {
 		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
 	}
 
+	@ExceptionHandler(NotFoundException.class)
+	public ResponseEntity<ErrorResponse> handleNotFoundException(NotFoundException ex) {
+		ErrorResponse errorResponse = new ErrorResponse(
+				"404 NOT_FOUND",
+				"The required object was not found.",
+				ex.getMessage(),
+				LocalDateTime.now().format(FORMATTER),
+				new ArrayList<>()
+		);
+		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+	}
+
+	@ExceptionHandler(ConflictException.class)
+	public ResponseEntity<ErrorResponse> handleConflictException(ConflictException ex) {
+		ErrorResponse errorResponse = new ErrorResponse(
+				"409 CONFLICT",
+				"For the requested operation the conditions are not met.",
+				ex.getMessage(),
+				LocalDateTime.now().format(FORMATTER),
+				new ArrayList<>()
+		);
+		return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
+	}
+
+	@ExceptionHandler(BadRequestException.class)
+	public ResponseEntity<ErrorResponse> handleBadRequestException(BadRequestException ex) {
+		ErrorResponse errorResponse = new ErrorResponse(
+				"400 BAD_REQUEST",
+				"Incorrectly made request.",
+				ex.getMessage(),
+				LocalDateTime.now().format(FORMATTER),
+				new ArrayList<>()
+		);
+		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+	}
+
 	public static class ErrorResponse {
 		private String status;
 		private String reason;
