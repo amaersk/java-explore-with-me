@@ -1,2 +1,2 @@
 # java-explore-with-me
-ExploreWithMe project.
+ExploreWithMe project
