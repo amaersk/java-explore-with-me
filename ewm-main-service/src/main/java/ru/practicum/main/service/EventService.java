@@ -132,10 +132,11 @@ public class EventService {
         LocalDateTime start = rangeStart != null ? LocalDateTime.parse(rangeStart, FORMATTER) : null;
         LocalDateTime end = rangeEnd != null ? LocalDateTime.parse(rangeEnd, FORMATTER) : null;
 
-        List<Long> usersList = (users != null && !users.isEmpty()) ? users : null;
-        List<Long> categoriesList = (categories != null && !categories.isEmpty()) ? categories : null;
+        List<Long> usersList = (users != null && !users.isEmpty()) ? users : List.of();
+        List<EventState> statesList = (eventStates != null && !eventStates.isEmpty()) ? eventStates : List.of();
+        List<Long> categoriesList = (categories != null && !categories.isEmpty()) ? categories : List.of();
 
-        Page<Event> events = eventRepository.findEventsByAdminFilters(usersList, eventStates, categoriesList, start, end, pageable);
+        Page<Event> events = eventRepository.findEventsByAdminFilters(usersList, statesList, categoriesList, start, end, pageable);
         return events.getContent().stream().map(event -> {
             Long confirmedRequests = participationRequestRepository.countConfirmedRequestsByEventId(event.getId());
             return eventMapper.toEventFullDto(event, confirmedRequests, 0L);
@@ -187,7 +188,7 @@ public class EventService {
             start = LocalDateTime.now();
         }
 
-        List<Long> categoriesList = (categories != null && !categories.isEmpty()) ? categories : null;
+        List<Long> categoriesList = (categories != null && !categories.isEmpty()) ? categories : List.of();
 
         Page<Event> events = eventRepository.findPublicEvents(text, categoriesList, paid, start, end, onlyAvailable, pageable);
         List<Event> eventList = events.getContent();
