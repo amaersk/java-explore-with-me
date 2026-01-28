@@ -94,10 +94,14 @@ public class ErrorHandler {
 
 	@ExceptionHandler(Exception.class)
 	public ResponseEntity<ErrorResponse> handleException(Exception ex) {
+		String message = ex.getMessage();
+		if (message == null || message.isEmpty()) {
+			message = "An unexpected error occurred";
+		}
 		ErrorResponse errorResponse = new ErrorResponse(
 				"500 INTERNAL_SERVER_ERROR",
 				"Internal server error.",
-				ex.getMessage() != null ? ex.getMessage() : "An unexpected error occurred",
+				message,
 				LocalDateTime.now().format(FORMATTER),
 				new ArrayList<>()
 		);
