@@ -18,9 +18,13 @@ import ru.practicum.main.model.Event.EventState;
 import ru.practicum.main.model.User;
 import ru.practicum.main.repository.EventRepository;
 import ru.practicum.main.repository.ParticipationRequestRepository;
+import ru.practicum.stats.client.StatsClient;
+import ru.practicum.stats.dto.ViewStatsDto;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -32,15 +36,18 @@ public class EventService {
 	private final UserService userService;
 	private final CategoryService categoryService;
 	private final ParticipationRequestRepository participationRequestRepository;
+	private final StatsClient statsClient;
 
 	public EventService(EventRepository eventRepository, EventMapper eventMapper,
 	                    UserService userService, CategoryService categoryService,
-	                    ParticipationRequestRepository participationRequestRepository) {
+	                    ParticipationRequestRepository participationRequestRepository,
+	                    StatsClient statsClient) {
 		this.eventRepository = eventRepository;
 		this.eventMapper = eventMapper;
 		this.userService = userService;
 		this.categoryService = categoryService;
 		this.participationRequestRepository = participationRequestRepository;
+		this.statsClient = statsClient;
 	}
 
 	public List<EventShortDto> getUserEvents(Long userId, Integer from, Integer size) {
@@ -194,10 +201,16 @@ public class EventService {
 		List<Long> categoriesList = (categories != null && !categories.isEmpty()) ? categories : null;
 
 		Page<Event> events = eventRepository.findPublicEvents(text, categoriesList, paid, start, end, onlyAvailable, pageable);
-		return events.getContent().stream()
+		List<Event> eventList = events.getContent();
+		
+		Map<String, Long> viewsMap = getViewsMap(eventList, start, end);
+		
+		return eventList.stream()
 				.map(event -> {
 					Long confirmedRequests = participationRequestRepository.countConfirmedRequestsByEventId(event.getId());
-					return eventMapper.toEventShortDto(event, confirmedRequests, 0L);
+					String uri = "/events/" + event.getId();
+					Long views = viewsMap.getOrDefault(uri, 0L);
+					return eventMapper.toEventShortDto(event, confirmedRequests, views);
 				})
 				.collect(Collectors.toList());
 	}
@@ -208,7 +221,8 @@ public class EventService {
 			throw new NotFoundException("Event with id=" + id + " was not found");
 		}
 		Long confirmedRequests = participationRequestRepository.countConfirmedRequestsByEventId(id);
-		return eventMapper.toEventFullDto(event, confirmedRequests, 0L);
+		Long views = getViewsForEvent(id);
+		return eventMapper.toEventFullDto(event, confirmedRequests, views);
 	}
 
 	private void updateEventFields(Event event, ru.practicum.main.dto.UpdateEventUserRequest dto) {
@@ -287,5 +301,49 @@ public class EventService {
 	public Event findEventById(Long eventId) {
 		return eventRepository.findById(eventId)
 				.orElseThrow(() -> new NotFoundException("Event with id=" + eventId + " was not found"));
+	}
+
+	private Map<String, Long> getViewsMap(List<Event> events, LocalDateTime start, LocalDateTime end) {
+		if (events.isEmpty()) {
+			return Map.of();
+		}
+		
+		List<String> uris = events.stream()
+				.map(event -> "/events/" + event.getId())
+				.collect(Collectors.toList());
+		
+		try {
+			LocalDateTime statsStart = start != null ? start : LocalDateTime.now().minusYears(1);
+			LocalDateTime statsEnd = end != null ? end : LocalDateTime.now().plusYears(1);
+			
+			ViewStatsDto[] stats = statsClient.getStats(statsStart, statsEnd, uris, false).getBody();
+			if (stats == null) {
+				return Map.of();
+			}
+			
+			return Arrays.stream(stats)
+					.collect(Collectors.toMap(
+							ViewStatsDto::getUri,
+							ViewStatsDto::getHits,
+							(hits1, hits2) -> hits1 + hits2
+					));
+		} catch (Exception e) {
+			return Map.of();
+		}
+	}
+
+	private Long getViewsForEvent(Long eventId) {
+		try {
+			String uri = "/events/" + eventId;
+			LocalDateTime start = LocalDateTime.now().minusYears(1);
+			LocalDateTime end = LocalDateTime.now().plusYears(1);
+			ViewStatsDto[] stats = statsClient.getStats(start, end, List.of(uri), false).getBody();
+			if (stats != null && stats.length > 0) {
+				return stats[0].getHits();
+			}
+			return 0L;
+		} catch (Exception e) {
+			return 0L;
+		}
 	}
 }
