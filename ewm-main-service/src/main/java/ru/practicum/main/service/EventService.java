@@ -307,20 +307,20 @@ public class EventService {
 		if (events.isEmpty()) {
 			return Map.of();
 		}
-		
+
 		List<String> uris = events.stream()
 				.map(event -> "/events/" + event.getId())
 				.collect(Collectors.toList());
-		
+
 		try {
 			LocalDateTime statsStart = start != null ? start : LocalDateTime.now().minusYears(1);
 			LocalDateTime statsEnd = end != null ? end : LocalDateTime.now().plusYears(1);
-			
+
 			ViewStatsDto[] stats = statsClient.getStats(statsStart, statsEnd, uris, false).getBody();
 			if (stats == null) {
 				return Map.of();
 			}
-			
+
 			return Arrays.stream(stats)
 					.collect(Collectors.toMap(
 							ViewStatsDto::getUri,
