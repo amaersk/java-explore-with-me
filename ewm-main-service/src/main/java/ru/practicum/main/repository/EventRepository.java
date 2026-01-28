@@ -15,9 +15,9 @@ public interface EventRepository extends JpaRepository<Event, Long> {
 	Page<Event> findByInitiatorId(Long userId, Pageable pageable);
 
 	@Query(value = "SELECT e.* FROM events e " +
-			"WHERE (COALESCE(array_length(:users::bigint[], 1), 0) = 0 OR e.initiator_id = ANY(:users::bigint[])) " +
-			"AND (COALESCE(array_length(:states::text[], 1), 0) = 0 OR e.state = ANY(:states::text[])) " +
-			"AND (COALESCE(array_length(:categories::bigint[], 1), 0) = 0 OR e.category_id = ANY(:categories::bigint[])) " +
+			"WHERE (COALESCE(array_length(CAST(:users AS bigint[]), 1), 0) = 0 OR e.initiator_id = ANY(CAST(:users AS bigint[]))) " +
+			"AND (COALESCE(array_length(CAST(:states AS text[]), 1), 0) = 0 OR e.state = ANY(CAST(:states AS text[]))) " +
+			"AND (COALESCE(array_length(CAST(:categories AS bigint[]), 1), 0) = 0 OR e.category_id = ANY(CAST(:categories AS bigint[]))) " +
 			"AND (:rangeStart IS NULL OR e.event_date >= :rangeStart) " +
 			"AND (:rangeEnd IS NULL OR e.event_date <= :rangeEnd)",
 			nativeQuery = true)
@@ -33,7 +33,7 @@ public interface EventRepository extends JpaRepository<Event, Long> {
 	@Query(value = "SELECT e.* FROM events e " +
 			"WHERE e.state = 'PUBLISHED' " +
 			"AND (:text IS NULL OR :text = '' OR LOWER(e.annotation) LIKE LOWER('%' || :text || '%') OR LOWER(e.description) LIKE LOWER('%' || :text || '%')) " +
-			"AND (COALESCE(array_length(:categories::bigint[], 1), 0) = 0 OR e.category_id = ANY(:categories::bigint[])) " +
+			"AND (COALESCE(array_length(CAST(:categories AS bigint[]), 1), 0) = 0 OR e.category_id = ANY(CAST(:categories AS bigint[]))) " +
 			"AND (:paid IS NULL OR e.paid = :paid) " +
 			"AND (:rangeStart IS NULL OR e.event_date >= :rangeStart) " +
 			"AND (:rangeEnd IS NULL OR e.event_date <= :rangeEnd) " +
