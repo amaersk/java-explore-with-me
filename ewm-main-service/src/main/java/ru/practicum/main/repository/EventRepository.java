@@ -15,30 +15,32 @@ import java.util.List;
 public interface EventRepository extends JpaRepository<Event, Long> {
 	Page<Event> findByInitiatorId(Long userId, Pageable pageable);
 
-	@Query("SELECT e FROM Event e WHERE " +
-			"(:users IS EMPTY OR e.initiator.id IN :users) AND " +
-			"(:states IS EMPTY OR e.state IN :states) AND " +
-			"(:categories IS EMPTY OR e.category.id IN :categories) AND " +
-			"(:rangeStart IS NULL OR e.eventDate >= :rangeStart) AND " +
-			"(:rangeEnd IS NULL OR e.eventDate <= :rangeEnd)")
+	@Query(value = "SELECT e.* FROM events e " +
+			"WHERE (COALESCE(array_length(:users::bigint[], 1), 0) = 0 OR e.initiator_id = ANY(:users::bigint[])) " +
+			"AND (COALESCE(array_length(:states::text[], 1), 0) = 0 OR e.state = ANY(:states::text[])) " +
+			"AND (COALESCE(array_length(:categories::bigint[], 1), 0) = 0 OR e.category_id = ANY(:categories::bigint[])) " +
+			"AND (:rangeStart IS NULL OR e.event_date >= :rangeStart) " +
+			"AND (:rangeEnd IS NULL OR e.event_date <= :rangeEnd)",
+			nativeQuery = true)
 	Page<Event> findEventsByAdminFilters(
 			@Param("users") List<Long> users,
-			@Param("states") List<EventState> states,
+			@Param("states") List<String> states,
 			@Param("categories") List<Long> categories,
 			@Param("rangeStart") LocalDateTime rangeStart,
 			@Param("rangeEnd") LocalDateTime rangeEnd,
 			Pageable pageable
 	);
 
-	@Query("SELECT e FROM Event e WHERE " +
-			"e.state = 'PUBLISHED' AND " +
-			"(:text IS NULL OR :text = '' OR LOWER(e.annotation) LIKE LOWER(CONCAT('%', :text, '%')) OR LOWER(e.description) LIKE LOWER(CONCAT('%', :text, '%'))) AND " +
-			"(:categories IS EMPTY OR e.category.id IN :categories) AND " +
-			"(:paid IS NULL OR e.paid = :paid) AND " +
-			"(:rangeStart IS NULL OR e.eventDate >= :rangeStart) AND " +
-			"(:rangeEnd IS NULL OR e.eventDate <= :rangeEnd) AND " +
-			"(:onlyAvailable IS NULL OR :onlyAvailable = false OR " +
-			"(e.participantLimit = 0 OR (SELECT COUNT(pr) FROM ParticipationRequest pr WHERE pr.event.id = e.id AND pr.status = 'CONFIRMED') < e.participantLimit))")
+	@Query(value = "SELECT e.* FROM events e " +
+			"WHERE e.state = 'PUBLISHED' " +
+			"AND (:text IS NULL OR :text = '' OR LOWER(e.annotation) LIKE LOWER('%' || :text || '%') OR LOWER(e.description) LIKE LOWER('%' || :text || '%')) " +
+			"AND (COALESCE(array_length(:categories::bigint[], 1), 0) = 0 OR e.category_id = ANY(:categories::bigint[])) " +
+			"AND (:paid IS NULL OR e.paid = :paid) " +
+			"AND (:rangeStart IS NULL OR e.event_date >= :rangeStart) " +
+			"AND (:rangeEnd IS NULL OR e.event_date <= :rangeEnd) " +
+			"AND (:onlyAvailable IS NULL OR :onlyAvailable = false OR " +
+			"(e.participant_limit = 0 OR (SELECT COUNT(*) FROM participation_requests pr WHERE pr.event_id = e.id AND pr.status = 'CONFIRMED') < e.participant_limit))",
+			nativeQuery = true)
 	Page<Event> findPublicEvents(
 			@Param("text") String text,
 			@Param("categories") List<Long> categories,

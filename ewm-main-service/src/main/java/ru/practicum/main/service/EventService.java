@@ -128,12 +128,12 @@ public class EventService {
             throw new BadRequestException("Size must be greater than 0");
         }
         Pageable pageable = PageRequest.of(from / size, size);
-        List<EventState> eventStates = (states != null && !states.isEmpty()) ? states.stream().map(EventState::valueOf).collect(Collectors.toList()) : null;
+        List<String> eventStates = (states != null && !states.isEmpty()) ? states : null;
         LocalDateTime start = rangeStart != null ? LocalDateTime.parse(rangeStart, FORMATTER) : null;
         LocalDateTime end = rangeEnd != null ? LocalDateTime.parse(rangeEnd, FORMATTER) : null;
 
         List<Long> usersList = (users != null && !users.isEmpty()) ? users : List.of();
-        List<EventState> statesList = (eventStates != null && !eventStates.isEmpty()) ? eventStates : List.of();
+        List<String> statesList = (eventStates != null && !eventStates.isEmpty()) ? eventStates : List.of();
         List<Long> categoriesList = (categories != null && !categories.isEmpty()) ? categories : List.of();
 
         Page<Event> events = eventRepository.findEventsByAdminFilters(usersList, statesList, categoriesList, start, end, pageable);
