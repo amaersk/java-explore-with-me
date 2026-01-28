@@ -8,8 +8,10 @@ import java.util.stream.Collectors;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 @RestControllerAdvice
 public class ErrorHandler {
@@ -52,6 +54,18 @@ public class ErrorHandler {
 				new ArrayList<>()
 		);
 		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+	}
+
+	@ExceptionHandler({MissingServletRequestParameterException.class, MethodArgumentTypeMismatchException.class})
+	public ResponseEntity<ErrorResponse> handleRequestParameterExceptions(Exception ex) {
+		ErrorResponse errorResponse = new ErrorResponse(
+				"400 BAD_REQUEST",
+				"Incorrectly made request.",
+				ex.getMessage(),
+				LocalDateTime.now().format(FORMATTER),
+				new ArrayList<>()
+		);
+		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
 	}
 
 	@ExceptionHandler(ConflictException.class)

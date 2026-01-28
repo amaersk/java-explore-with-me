@@ -259,6 +259,9 @@ public class EventService {
 		}
 		if (dto.getEventDate() != null && !dto.getEventDate().trim().isEmpty()) {
 			LocalDateTime eventDate = LocalDateTime.parse(dto.getEventDate(), FORMATTER);
+			if (eventDate.isBefore(LocalDateTime.now().plusHours(2))) {
+				throw new BadRequestException("Field: eventDate. Error: должно содержать дату, которая еще не наступила. Value: " + dto.getEventDate());
+			}
 			if (event.getPublishedOn() != null && eventDate.isBefore(event.getPublishedOn().plusHours(1))) {
 				throw new ConflictException("Cannot change event date because it's less than 1 hour before publication");
 			}

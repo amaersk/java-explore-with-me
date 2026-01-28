@@ -47,6 +47,9 @@ public class CategoryService {
 
 	@Transactional
 	public CategoryDto createCategory(ru.practicum.main.dto.NewCategoryDto dto) {
+		if (categoryRepository.existsByName(dto.getName())) {
+			throw new ConflictException("Category name must be unique");
+		}
 		Category category = categoryMapper.toCategory(dto);
 		Category saved = categoryRepository.save(category);
 		return categoryMapper.toCategoryDto(saved);
@@ -55,7 +58,11 @@ public class CategoryService {
 	@Transactional
 	public CategoryDto updateCategory(Long catId, CategoryDto dto) {
 		Category category = findCategoryById(catId);
-		category.setName(dto.getName());
+		String newName = dto.getName();
+		if (!category.getName().equals(newName) && categoryRepository.existsByName(newName)) {
+			throw new ConflictException("Category name must be unique");
+		}
+		category.setName(newName);
 		Category saved = categoryRepository.save(category);
 		return categoryMapper.toCategoryDto(saved);
 	}
