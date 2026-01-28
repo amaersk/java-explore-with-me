@@ -395,7 +395,7 @@ public class EventService {
             LocalDateTime statsStart = start != null ? start : LocalDateTime.now().minusYears(1);
             LocalDateTime statsEnd = end != null ? end : LocalDateTime.now().plusYears(1);
 
-            ViewStatsDto[] stats = statsClient.getStats(statsStart, statsEnd, uris, false).getBody();
+            ViewStatsDto[] stats = statsClient.getStats(statsStart, statsEnd, uris, true).getBody();
             if (stats == null) {
                 return Map.of();
             }
@@ -411,7 +411,7 @@ public class EventService {
             String uri = "/events/" + eventId;
             LocalDateTime start = LocalDateTime.now().minusYears(1);
             LocalDateTime end = LocalDateTime.now().plusYears(1);
-            ViewStatsDto[] stats = statsClient.getStats(start, end, List.of(uri), false).getBody();
+            ViewStatsDto[] stats = statsClient.getStats(start, end, List.of(uri), true).getBody();
             if (stats != null && stats.length > 0) {
                 return stats[0].getHits();
             }
