@@ -16,9 +16,9 @@ public interface EventRepository extends JpaRepository<Event, Long> {
 	Page<Event> findByInitiatorId(Long userId, Pageable pageable);
 
 	@Query("SELECT e FROM Event e WHERE " +
-			"(:users IS NULL OR SIZE(:users) = 0 OR e.initiator.id IN :users) AND " +
-			"(:states IS NULL OR SIZE(:states) = 0 OR e.state IN :states) AND " +
-			"(:categories IS NULL OR SIZE(:categories) = 0 OR e.category.id IN :categories) AND " +
+			"(:users IS NULL OR e.initiator.id IN :users) AND " +
+			"(:states IS NULL OR e.state IN :states) AND " +
+			"(:categories IS NULL OR e.category.id IN :categories) AND " +
 			"(:rangeStart IS NULL OR e.eventDate >= :rangeStart) AND " +
 			"(:rangeEnd IS NULL OR e.eventDate <= :rangeEnd)")
 	Page<Event> findEventsByAdminFilters(
@@ -33,7 +33,7 @@ public interface EventRepository extends JpaRepository<Event, Long> {
 	@Query("SELECT e FROM Event e WHERE " +
 			"e.state = 'PUBLISHED' AND " +
 			"(:text IS NULL OR :text = '' OR LOWER(e.annotation) LIKE LOWER(CONCAT('%', :text, '%')) OR LOWER(e.description) LIKE LOWER(CONCAT('%', :text, '%'))) AND " +
-			"(:categories IS NULL OR SIZE(:categories) = 0 OR e.category.id IN :categories) AND " +
+			"(:categories IS NULL OR e.category.id IN :categories) AND " +
 			"(:paid IS NULL OR e.paid = :paid) AND " +
 			"(:rangeStart IS NULL OR e.eventDate >= :rangeStart) AND " +
 			"(:rangeEnd IS NULL OR e.eventDate <= :rangeEnd) AND " +
