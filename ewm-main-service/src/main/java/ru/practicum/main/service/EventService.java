@@ -27,6 +27,7 @@ import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Subquery;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
@@ -132,12 +133,21 @@ public class EventService {
         if (size <= 0) {
             throw new BadRequestException("Size must be greater than 0");
         }
+        if (from < 0) {
+            throw new BadRequestException("From must be greater than or equal to 0");
+        }
         Pageable pageable = PageRequest.of(from / size, size);
 
         final List<EventState> eventStates = parseEventStates(states);
 
-        LocalDateTime start = rangeStart != null ? LocalDateTime.parse(rangeStart, FORMATTER) : null;
-        LocalDateTime end = rangeEnd != null ? LocalDateTime.parse(rangeEnd, FORMATTER) : null;
+        LocalDateTime start;
+        LocalDateTime end;
+        try {
+            start = rangeStart != null ? LocalDateTime.parse(rangeStart, FORMATTER) : null;
+            end = rangeEnd != null ? LocalDateTime.parse(rangeEnd, FORMATTER) : null;
+        } catch (DateTimeParseException ex) {
+            throw new BadRequestException("Incorrectly made request.");
+        }
 
         if (start != null && end != null && start.isAfter(end)) {
             throw new BadRequestException("rangeStart must be before rangeEnd");
@@ -197,9 +207,20 @@ public class EventService {
         if (size <= 0) {
             throw new BadRequestException("Size must be greater than 0");
         }
+        if (from < 0) {
+            throw new BadRequestException("From must be greater than or equal to 0");
+        }
 
-        LocalDateTime parsedStart = rangeStart != null ? LocalDateTime.parse(rangeStart, FORMATTER) : null;
-        final LocalDateTime end = rangeEnd != null ? LocalDateTime.parse(rangeEnd, FORMATTER) : null;
+        LocalDateTime parsedStart;
+        LocalDateTime parsedEnd;
+        try {
+            parsedStart = rangeStart != null ? LocalDateTime.parse(rangeStart, FORMATTER) : null;
+            parsedEnd = rangeEnd != null ? LocalDateTime.parse(rangeEnd, FORMATTER) : null;
+        } catch (DateTimeParseException ex) {
+            throw new BadRequestException("Incorrectly made request.");
+        }
+
+        final LocalDateTime end = parsedEnd;
         final LocalDateTime start = (parsedStart == null && end == null) ? LocalDateTime.now() : parsedStart;
         if (start != null && end != null && start.isAfter(end)) {
             throw new BadRequestException("rangeStart must be before rangeEnd");

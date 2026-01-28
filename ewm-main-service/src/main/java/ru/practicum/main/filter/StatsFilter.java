@@ -6,7 +6,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.concurrent.CompletableFuture;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.annotation.Order;
 import org.springframework.lang.NonNull;
@@ -30,21 +29,19 @@ public class StatsFilter extends OncePerRequestFilter {
 	                                @NonNull HttpServletResponse response,
 	                                @NonNull FilterChain filterChain)
 			throws ServletException, IOException {
-		filterChain.doFilter(request, response);
-
 		if (shouldTrack(request)) {
 			String uri = request.getRequestURI();
 			String ip = getClientIp(request);
 			LocalDateTime timestamp = LocalDateTime.now();
 
-			CompletableFuture.runAsync(() -> {
-				try {
-					statsClient.sendHit(APP_NAME, uri, ip, timestamp);
-				} catch (Exception e) {
-					logger.error("Failed to send statistics", e);
-				}
-			});
+			try {
+				statsClient.sendHit(APP_NAME, uri, ip, timestamp);
+			} catch (Exception e) {
+				logger.error("Failed to send statistics", e);
+			}
 		}
+
+		filterChain.doFilter(request, response);
 	}
 
 	private boolean shouldTrack(HttpServletRequest request) {
