@@ -2,9 +2,9 @@ server:
   port: 8080
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:6541/ewm-main
-    username: ewm
-    password: ewm
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:6541/ewm-main}
+    username: ${SPRING_DATASOURCE_USERNAME:ewm}
+    password: ${SPRING_DATASOURCE_PASSWORD:ewm}
   jpa:
     hibernate:
       ddl-auto: none
@@ -18,6 +18,6 @@ spring:
       write-dates-as-timestamps: false
 
 stats:
-  server-url: http://localhost:9090
+  server-url: ${STATS_SERVER_URL:http://localhost:9090}
 
 

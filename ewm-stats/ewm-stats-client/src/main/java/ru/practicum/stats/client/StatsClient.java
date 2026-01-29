@@ -48,7 +48,7 @@ public class StatsClient {
 				builder.queryParam("uris", uri);
 			}
 		}
-		return restTemplate.getForEntity(builder.build(true).toUri(), ViewStatsDto[].class);
+		return restTemplate.getForEntity(builder.build().encode().toUri(), ViewStatsDto[].class);
 	}
 }
 

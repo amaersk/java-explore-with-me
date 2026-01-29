@@ -1,12 +1,14 @@
-package ru.practicum.main.dto;
+package ru.practicum.main.model;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.persistence.Column;
+import jakarta.persistence.Embeddable;
 
-public class LocationDto {
-	@NotNull
+@Embeddable
+public class Location {
+	@Column(name = "lat", nullable = false)
 	private Float lat;
 
-	@NotNull
+	@Column(name = "lon", nullable = false)
 	private Float lon;
 
 	public Float getLat() {
@@ -25,5 +27,3 @@ public class LocationDto {
 		this.lon = lon;
 	}
 }
-
-
