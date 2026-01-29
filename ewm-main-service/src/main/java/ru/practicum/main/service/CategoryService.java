@@ -21,12 +21,10 @@ import java.util.stream.Collectors;
 public class CategoryService {
 	private final CategoryRepository categoryRepository;
 	private final EventRepository eventRepository;
-	private final CategoryMapper categoryMapper;
 
-	public CategoryService(CategoryRepository categoryRepository, EventRepository eventRepository, CategoryMapper categoryMapper) {
+	public CategoryService(CategoryRepository categoryRepository, EventRepository eventRepository) {
 		this.categoryRepository = categoryRepository;
 		this.eventRepository = eventRepository;
-		this.categoryMapper = categoryMapper;
 	}
 
 	public List<CategoryDto> getCategories(Integer from, Integer size) {
@@ -36,13 +34,13 @@ public class CategoryService {
 		Pageable pageable = PageRequest.of(from / size, size);
 		Page<Category> categories = categoryRepository.findAll(pageable);
 		return categories.getContent().stream()
-				.map(categoryMapper::toCategoryDto)
+				.map(CategoryMapper::toCategoryDto)
 				.collect(Collectors.toList());
 	}
 
 	public CategoryDto getCategory(Long catId) {
 		Category category = findCategoryById(catId);
-		return categoryMapper.toCategoryDto(category);
+		return CategoryMapper.toCategoryDto(category);
 	}
 
 	@Transactional
@@ -50,9 +48,9 @@ public class CategoryService {
 		if (categoryRepository.existsByName(dto.getName())) {
 			throw new ConflictException("Category name must be unique");
 		}
-		Category category = categoryMapper.toCategory(dto);
+		Category category = CategoryMapper.toCategory(dto);
 		Category saved = categoryRepository.save(category);
-		return categoryMapper.toCategoryDto(saved);
+		return CategoryMapper.toCategoryDto(saved);
 	}
 
 	@Transactional
@@ -64,7 +62,7 @@ public class CategoryService {
 		}
 		category.setName(newName);
 		Category saved = categoryRepository.save(category);
-		return categoryMapper.toCategoryDto(saved);
+		return CategoryMapper.toCategoryDto(saved);
 	}
 
 	@Transactional

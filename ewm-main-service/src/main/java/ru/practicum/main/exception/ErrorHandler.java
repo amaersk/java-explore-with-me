@@ -1,7 +1,6 @@
 package ru.practicum.main.exception;
 
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -12,11 +11,10 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import ru.practicum.main.util.DateUtil;
 
 @RestControllerAdvice
 public class ErrorHandler {
-
-	private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
 	@ExceptionHandler(MethodArgumentNotValidException.class)
 	public ResponseEntity<ErrorResponse> handleValidationException(MethodArgumentNotValidException ex) {
@@ -37,7 +35,7 @@ public class ErrorHandler {
 				"400 BAD_REQUEST",
 				"Incorrectly made request.",
 				errorMessage,
-				LocalDateTime.now().format(FORMATTER),
+				LocalDateTime.now().format(DateUtil.MAIN_FORMATTER),
 				errors
 		);
 
@@ -50,7 +48,7 @@ public class ErrorHandler {
 				"404 NOT_FOUND",
 				"The required object was not found.",
 				ex.getMessage(),
-				LocalDateTime.now().format(FORMATTER),
+				LocalDateTime.now().format(DateUtil.MAIN_FORMATTER),
 				new ArrayList<>()
 		);
 		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
@@ -62,7 +60,7 @@ public class ErrorHandler {
 				"400 BAD_REQUEST",
 				"Incorrectly made request.",
 				ex.getMessage(),
-				LocalDateTime.now().format(FORMATTER),
+				LocalDateTime.now().format(DateUtil.MAIN_FORMATTER),
 				new ArrayList<>()
 		);
 		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
@@ -74,7 +72,7 @@ public class ErrorHandler {
 				"409 CONFLICT",
 				"For the requested operation the conditions are not met.",
 				ex.getMessage(),
-				LocalDateTime.now().format(FORMATTER),
+				LocalDateTime.now().format(DateUtil.MAIN_FORMATTER),
 				new ArrayList<>()
 		);
 		return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
@@ -86,7 +84,7 @@ public class ErrorHandler {
 				"400 BAD_REQUEST",
 				"Incorrectly made request.",
 				ex.getMessage(),
-				LocalDateTime.now().format(FORMATTER),
+				LocalDateTime.now().format(DateUtil.MAIN_FORMATTER),
 				new ArrayList<>()
 		);
 		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
@@ -102,7 +100,7 @@ public class ErrorHandler {
 				"500 INTERNAL_SERVER_ERROR",
 				"Internal server error.",
 				message,
-				LocalDateTime.now().format(FORMATTER),
+				LocalDateTime.now().format(DateUtil.MAIN_FORMATTER),
 				new ArrayList<>()
 		);
 		ex.printStackTrace();

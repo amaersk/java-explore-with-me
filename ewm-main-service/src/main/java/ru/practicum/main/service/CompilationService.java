@@ -17,6 +17,7 @@ import ru.practicum.main.repository.CompilationRepository;
 import ru.practicum.main.repository.EventRepository;
 import ru.practicum.main.repository.ParticipationRequestRepository;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -50,12 +51,17 @@ public class CompilationService {
 			compilations = compilationRepository.findAll(pageable);
 		}
 
-		return compilations.getContent().stream()
+		List<Compilation> compilationList = compilations.getContent();
+		List<Event> allEvents = compilationList.stream()
+				.flatMap(c -> c.getEvents().stream())
+				.collect(Collectors.toList());
+		Map<Long, Long> confirmedMap = getConfirmedRequestsMap(allEvents);
+
+		return compilationList.stream()
 				.map(compilation -> {
 					List<EventShortDto> events = compilation.getEvents().stream()
 							.map(event -> {
-								Long confirmedRequests = participationRequestRepository.countConfirmedRequestsByEventId(event.getId());
-								return eventMapper.toEventShortDto(event, confirmedRequests, 0L);
+								return eventMapper.toEventShortDto(event, confirmedMap.getOrDefault(event.getId(), 0L), 0L);
 							})
 							.collect(Collectors.toList());
 					return compilationMapper.toCompilationDto(compilation, events);
@@ -65,10 +71,10 @@ public class CompilationService {
 
 	public CompilationDto getCompilation(Long compId) {
 		Compilation compilation = findCompilationById(compId);
+		Map<Long, Long> confirmedMap = getConfirmedRequestsMap(compilation.getEvents().stream().collect(Collectors.toList()));
 		List<EventShortDto> events = compilation.getEvents().stream()
 				.map(event -> {
-					Long confirmedRequests = participationRequestRepository.countConfirmedRequestsByEventId(event.getId());
-					return eventMapper.toEventShortDto(event, confirmedRequests, 0L);
+					return eventMapper.toEventShortDto(event, confirmedMap.getOrDefault(event.getId(), 0L), 0L);
 				})
 				.collect(Collectors.toList());
 		return compilationMapper.toCompilationDto(compilation, events);
@@ -86,10 +92,10 @@ public class CompilationService {
 		}
 
 		Compilation saved = compilationRepository.save(compilation);
+		Map<Long, Long> confirmedMap = getConfirmedRequestsMap(saved.getEvents().stream().collect(Collectors.toList()));
 		List<EventShortDto> events = saved.getEvents().stream()
 				.map(event -> {
-					Long confirmedRequests = participationRequestRepository.countConfirmedRequestsByEventId(event.getId());
-					return eventMapper.toEventShortDto(event, confirmedRequests, 0L);
+					return eventMapper.toEventShortDto(event, confirmedMap.getOrDefault(event.getId(), 0L), 0L);
 				})
 				.collect(Collectors.toList());
 		return compilationMapper.toCompilationDto(saved, events);
@@ -115,10 +121,10 @@ public class CompilationService {
 		}
 
 		Compilation saved = compilationRepository.save(compilation);
+		Map<Long, Long> confirmedMap = getConfirmedRequestsMap(saved.getEvents().stream().collect(Collectors.toList()));
 		List<EventShortDto> events = saved.getEvents().stream()
 				.map(event -> {
-					Long confirmedRequests = participationRequestRepository.countConfirmedRequestsByEventId(event.getId());
-					return eventMapper.toEventShortDto(event, confirmedRequests, 0L);
+					return eventMapper.toEventShortDto(event, confirmedMap.getOrDefault(event.getId(), 0L), 0L);
 				})
 				.collect(Collectors.toList());
 		return compilationMapper.toCompilationDto(saved, events);
@@ -133,5 +139,21 @@ public class CompilationService {
 	private Compilation findCompilationById(Long compId) {
 		return compilationRepository.findById(compId)
 				.orElseThrow(() -> new NotFoundException("Compilation with id=" + compId + " was not found"));
+	}
+
+	private Map<Long, Long> getConfirmedRequestsMap(List<Event> events) {
+		if (events == null || events.isEmpty()) {
+			return Map.of();
+		}
+		List<Long> eventIds = events.stream().map(Event::getId).collect(Collectors.toList());
+		List<ParticipationRequestRepository.ConfirmedCount> counts = participationRequestRepository.countConfirmedRequestsByEventIds(eventIds);
+		if (counts == null || counts.isEmpty()) {
+			return Map.of();
+		}
+		return counts.stream().collect(Collectors.toMap(
+				ParticipationRequestRepository.ConfirmedCount::getEventId,
+				ParticipationRequestRepository.ConfirmedCount::getCnt,
+				(a, b) -> a + b
+		));
 	}
 }

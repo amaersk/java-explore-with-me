@@ -20,13 +20,13 @@ import ru.practicum.main.model.ParticipationRequest;
 import ru.practicum.main.model.User;
 import ru.practicum.main.repository.EventRepository;
 import ru.practicum.main.repository.ParticipationRequestRepository;
+import ru.practicum.main.util.DateUtil;
 import ru.practicum.stats.client.StatsClient;
 import ru.practicum.stats.dto.ViewStatsDto;
 
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Subquery;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -37,7 +37,6 @@ import java.util.stream.Collectors;
 @Service
 @Transactional(readOnly = true)
 public class EventService {
-    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     private final EventRepository eventRepository;
     private final EventMapper eventMapper;
     private final UserService userService;
@@ -60,10 +59,15 @@ public class EventService {
         }
         Pageable pageable = PageRequest.of(from / size, size);
         Page<Event> events = eventRepository.findByInitiatorId(userId, pageable);
-        return events.getContent().stream().map(event -> {
-            Long confirmedRequests = participationRequestRepository.countConfirmedRequestsByEventId(event.getId());
-            return eventMapper.toEventShortDto(event, confirmedRequests, 0L);
-        }).collect(Collectors.toList());
+        List<Event> eventList = events.getContent();
+        Map<Long, Long> confirmedMap = getConfirmedRequestsMap(eventList);
+        return eventList.stream()
+                .map(event -> eventMapper.toEventShortDto(
+                        event,
+                        confirmedMap.getOrDefault(event.getId(), 0L),
+                        0L
+                ))
+                .collect(Collectors.toList());
     }
 
     public EventFullDto getUserEvent(Long userId, Long eventId) {
@@ -79,25 +83,13 @@ public class EventService {
     public EventFullDto createEvent(Long userId, ru.practicum.main.dto.NewEventDto dto) {
         User user = userService.findUserById(userId);
         Category category = categoryService.findCategoryById(dto.getCategory());
-        LocalDateTime eventDate = LocalDateTime.parse(dto.getEventDate(), FORMATTER);
+        LocalDateTime eventDate = LocalDateTime.parse(dto.getEventDate(), DateUtil.MAIN_FORMATTER);
 
         if (eventDate.isBefore(LocalDateTime.now().plusHours(2))) {
             throw new BadRequestException("Field: eventDate. Error: должно содержать дату, которая еще не наступила. Value: " + dto.getEventDate());
         }
 
-        Event event = new Event();
-        event.setAnnotation(dto.getAnnotation());
-        event.setCategory(category);
-        event.setDescription(dto.getDescription());
-        event.setEventDate(eventDate);
-        event.setInitiator(user);
-        event.setLocation(eventMapper.toLocation(dto.getLocation()));
-        event.setPaid(dto.getPaid() != null ? dto.getPaid() : false);
-        event.setParticipantLimit(dto.getParticipantLimit() != null ? dto.getParticipantLimit() : 0);
-        event.setRequestModeration(dto.getRequestModeration() != null ? dto.getRequestModeration() : true);
-        event.setState(EventState.PENDING);
-        event.setTitle(dto.getTitle());
-        event.setCreatedOn(LocalDateTime.now());
+        Event event = eventMapper.toEvent(dto, user, category, eventDate, LocalDateTime.now());
 
         Event saved = eventRepository.save(event);
         return eventMapper.toEventFullDto(saved, 0L, 0L);
@@ -143,8 +135,8 @@ public class EventService {
         LocalDateTime start;
         LocalDateTime end;
         try {
-            start = rangeStart != null ? LocalDateTime.parse(rangeStart, FORMATTER) : null;
-            end = rangeEnd != null ? LocalDateTime.parse(rangeEnd, FORMATTER) : null;
+            start = rangeStart != null ? LocalDateTime.parse(rangeStart, DateUtil.MAIN_FORMATTER) : null;
+            end = rangeEnd != null ? LocalDateTime.parse(rangeEnd, DateUtil.MAIN_FORMATTER) : null;
         } catch (DateTimeParseException ex) {
             throw new BadRequestException("Incorrectly made request.");
         }
@@ -171,10 +163,15 @@ public class EventService {
         }
 
         Page<Event> events = eventRepository.findAll(spec, pageable);
-        return events.getContent().stream().map(event -> {
-            Long confirmedRequests = participationRequestRepository.countConfirmedRequestsByEventId(event.getId());
-            return eventMapper.toEventFullDto(event, confirmedRequests, 0L);
-        }).collect(Collectors.toList());
+        List<Event> eventList = events.getContent();
+        Map<Long, Long> confirmedMap = getConfirmedRequestsMap(eventList);
+        return eventList.stream()
+                .map(event -> eventMapper.toEventFullDto(
+                        event,
+                        confirmedMap.getOrDefault(event.getId(), 0L),
+                        0L
+                ))
+                .collect(Collectors.toList());
     }
 
     @Transactional
@@ -214,8 +211,8 @@ public class EventService {
         LocalDateTime parsedStart;
         LocalDateTime parsedEnd;
         try {
-            parsedStart = rangeStart != null ? LocalDateTime.parse(rangeStart, FORMATTER) : null;
-            parsedEnd = rangeEnd != null ? LocalDateTime.parse(rangeEnd, FORMATTER) : null;
+            parsedStart = rangeStart != null ? LocalDateTime.parse(rangeStart, DateUtil.MAIN_FORMATTER) : null;
+            parsedEnd = rangeEnd != null ? LocalDateTime.parse(rangeEnd, DateUtil.MAIN_FORMATTER) : null;
         } catch (DateTimeParseException ex) {
             throw new BadRequestException("Incorrectly made request.");
         }
@@ -279,6 +276,7 @@ public class EventService {
         }
 
         Map<String, Long> viewsMap = getViewsMap(eventList, start, end);
+        Map<Long, Long> confirmedMap = getConfirmedRequestsMap(eventList);
 
         if ("VIEWS".equals(sort)) {
             eventList = eventList.stream()
@@ -290,10 +288,9 @@ public class EventService {
         }
 
         return eventList.stream().map(event -> {
-            Long confirmedRequests = participationRequestRepository.countConfirmedRequestsByEventId(event.getId());
             String uri = "/events/" + event.getId();
             Long views = viewsMap.getOrDefault(uri, 0L);
-            return eventMapper.toEventShortDto(event, confirmedRequests, views);
+            return eventMapper.toEventShortDto(event, confirmedMap.getOrDefault(event.getId(), 0L), views);
         }).collect(Collectors.toList());
     }
 
@@ -319,7 +316,7 @@ public class EventService {
             event.setDescription(dto.getDescription());
         }
         if (dto.getEventDate() != null && !dto.getEventDate().trim().isEmpty()) {
-            LocalDateTime eventDate = LocalDateTime.parse(dto.getEventDate(), FORMATTER);
+            LocalDateTime eventDate = LocalDateTime.parse(dto.getEventDate(), DateUtil.MAIN_FORMATTER);
             if (eventDate.isBefore(LocalDateTime.now().plusHours(2))) {
                 throw new BadRequestException("Field: eventDate. Error: должно содержать дату, которая еще не наступила. Value: " + dto.getEventDate());
             }
@@ -354,7 +351,7 @@ public class EventService {
             event.setDescription(dto.getDescription());
         }
         if (dto.getEventDate() != null && !dto.getEventDate().trim().isEmpty()) {
-            LocalDateTime eventDate = LocalDateTime.parse(dto.getEventDate(), FORMATTER);
+            LocalDateTime eventDate = LocalDateTime.parse(dto.getEventDate(), DateUtil.MAIN_FORMATTER);
             if (eventDate.isBefore(LocalDateTime.now().plusHours(2))) {
                 throw new BadRequestException("Field: eventDate. Error: должно содержать дату, которая еще не наступила. Value: " + dto.getEventDate());
             }
@@ -404,6 +401,22 @@ public class EventService {
         } catch (Exception e) {
             return Map.of();
         }
+    }
+
+    private Map<Long, Long> getConfirmedRequestsMap(List<Event> events) {
+        if (events == null || events.isEmpty()) {
+            return Map.of();
+        }
+        List<Long> eventIds = events.stream().map(Event::getId).collect(Collectors.toList());
+        List<ParticipationRequestRepository.ConfirmedCount> counts = participationRequestRepository.countConfirmedRequestsByEventIds(eventIds);
+        if (counts == null || counts.isEmpty()) {
+            return Map.of();
+        }
+        return counts.stream().collect(Collectors.toMap(
+                ParticipationRequestRepository.ConfirmedCount::getEventId,
+                ParticipationRequestRepository.ConfirmedCount::getCnt,
+                (a, b) -> a + b
+        ));
     }
 
     private Long getViewsForEvent(Long eventId) {

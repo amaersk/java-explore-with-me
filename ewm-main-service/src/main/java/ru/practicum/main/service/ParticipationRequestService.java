@@ -23,15 +23,12 @@ import java.util.stream.Collectors;
 @Transactional(readOnly = true)
 public class ParticipationRequestService {
 	private final ParticipationRequestRepository participationRequestRepository;
-	private final ParticipationRequestMapper participationRequestMapper;
 	private final EventService eventService;
 	private final UserService userService;
 
 	public ParticipationRequestService(ParticipationRequestRepository participationRequestRepository,
-	                                   ParticipationRequestMapper participationRequestMapper,
 	                                   EventService eventService, UserService userService) {
 		this.participationRequestRepository = participationRequestRepository;
-		this.participationRequestMapper = participationRequestMapper;
 		this.eventService = eventService;
 		this.userService = userService;
 	}
@@ -40,7 +37,7 @@ public class ParticipationRequestService {
 		User user = userService.findUserById(userId);
 		List<ParticipationRequest> requests = participationRequestRepository.findByRequesterId(userId);
 		return requests.stream()
-				.map(participationRequestMapper::toParticipationRequestDto)
+				.map(ParticipationRequestMapper::toParticipationRequestDto)
 				.collect(Collectors.toList());
 	}
 
@@ -78,7 +75,7 @@ public class ParticipationRequestService {
 		}
 
 		ParticipationRequest saved = participationRequestRepository.save(request);
-		return participationRequestMapper.toParticipationRequestDto(saved);
+		return ParticipationRequestMapper.toParticipationRequestDto(saved);
 	}
 
 	@Transactional
@@ -92,7 +89,7 @@ public class ParticipationRequestService {
 
 		request.setStatus(RequestStatus.CANCELED);
 		ParticipationRequest saved = participationRequestRepository.save(request);
-		return participationRequestMapper.toParticipationRequestDto(saved);
+		return ParticipationRequestMapper.toParticipationRequestDto(saved);
 	}
 
 	public List<ParticipationRequestDto> getEventRequests(Long userId, Long eventId) {
@@ -103,7 +100,7 @@ public class ParticipationRequestService {
 
 		List<ParticipationRequest> requests = participationRequestRepository.findByEventInitiatorIdAndEventId(userId, eventId);
 		return requests.stream()
-				.map(participationRequestMapper::toParticipationRequestDto)
+				.map(ParticipationRequestMapper::toParticipationRequestDto)
 				.collect(Collectors.toList());
 	}
 
@@ -153,7 +150,7 @@ public class ParticipationRequestService {
 			}
 
 			result.setConfirmedRequests(requests.stream()
-					.map(participationRequestMapper::toParticipationRequestDto)
+					.map(ParticipationRequestMapper::toParticipationRequestDto)
 					.collect(Collectors.toList()));
 		} else if ("REJECTED".equals(dto.getStatus())) {
 			for (ParticipationRequest request : requests) {
@@ -161,7 +158,7 @@ public class ParticipationRequestService {
 			}
 			participationRequestRepository.saveAll(requests);
 			result.setRejectedRequests(requests.stream()
-					.map(participationRequestMapper::toParticipationRequestDto)
+					.map(ParticipationRequestMapper::toParticipationRequestDto)
 					.collect(Collectors.toList()));
 		}
 
