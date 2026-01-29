@@ -16,9 +16,13 @@ import ru.practicum.main.dto.EventFullDto;
 import ru.practicum.main.dto.EventRequestStatusUpdateRequest;
 import ru.practicum.main.dto.EventRequestStatusUpdateResult;
 import ru.practicum.main.dto.EventShortDto;
+import ru.practicum.main.dto.NewCommentDto;
 import ru.practicum.main.dto.NewEventDto;
+import ru.practicum.main.dto.UpdateCommentDto;
 import ru.practicum.main.dto.ParticipationRequestDto;
 import ru.practicum.main.dto.UpdateEventUserRequest;
+import ru.practicum.main.dto.CommentDto;
+import ru.practicum.main.service.CommentService;
 import ru.practicum.main.service.EventService;
 import ru.practicum.main.service.ParticipationRequestService;
 
@@ -27,10 +31,13 @@ import ru.practicum.main.service.ParticipationRequestService;
 public class PrivateControllers {
 	private final EventService eventService;
 	private final ParticipationRequestService participationRequestService;
+	private final CommentService commentService;
 
-	public PrivateControllers(EventService eventService, ParticipationRequestService participationRequestService) {
+	public PrivateControllers(EventService eventService, ParticipationRequestService participationRequestService,
+	                          CommentService commentService) {
 		this.eventService = eventService;
 		this.participationRequestService = participationRequestService;
+		this.commentService = commentService;
 	}
 
 	@GetMapping("/events")
@@ -87,6 +94,27 @@ public class PrivateControllers {
 	public ResponseEntity<ParticipationRequestDto> cancelRequest(@PathVariable("userId") Long userId,
 	                                                             @PathVariable("requestId") Long requestId) {
 		return ResponseEntity.ok(participationRequestService.cancelRequest(userId, requestId));
+	}
+
+	@PostMapping("/events/{eventId}/comments")
+	public ResponseEntity<CommentDto> addComment(@PathVariable("userId") Long userId,
+	                                             @PathVariable("eventId") Long eventId,
+	                                             @Valid @RequestBody NewCommentDto dto) {
+		return ResponseEntity.status(HttpStatus.CREATED).body(commentService.addComment(userId, eventId, dto));
+	}
+
+	@PatchMapping("/comments/{commentId}")
+	public ResponseEntity<CommentDto> updateComment(@PathVariable("userId") Long userId,
+	                                                @PathVariable("commentId") Long commentId,
+	                                                @Valid @RequestBody UpdateCommentDto dto) {
+		return ResponseEntity.ok(commentService.updateComment(userId, commentId, dto));
+	}
+
+	@org.springframework.web.bind.annotation.DeleteMapping("/comments/{commentId}")
+	public ResponseEntity<Void> deleteComment(@PathVariable("userId") Long userId,
+	                                          @PathVariable("commentId") Long commentId) {
+		commentService.deleteComment(userId, commentId);
+		return ResponseEntity.noContent().build();
 	}
 }
 

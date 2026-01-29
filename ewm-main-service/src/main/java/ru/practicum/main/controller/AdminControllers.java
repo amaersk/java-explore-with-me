@@ -18,14 +18,17 @@ import ru.practicum.main.dto.CompilationDto;
 import ru.practicum.main.dto.EventFullDto;
 import ru.practicum.main.dto.NewCategoryDto;
 import ru.practicum.main.dto.NewCompilationDto;
+import ru.practicum.main.dto.ModerateCommentRequest;
 import ru.practicum.main.dto.NewUserRequest;
 import ru.practicum.main.dto.UpdateCompilationRequest;
 import ru.practicum.main.dto.UpdateEventAdminRequest;
 import ru.practicum.main.dto.UserDto;
 import ru.practicum.main.service.CategoryService;
+import ru.practicum.main.service.CommentService;
 import ru.practicum.main.service.CompilationService;
 import ru.practicum.main.service.EventService;
 import ru.practicum.main.service.UserService;
+import ru.practicum.main.dto.CommentDto;
 
 @RestController
 @RequestMapping("/admin")
@@ -34,13 +37,16 @@ public class AdminControllers {
 	private final CategoryService categoryService;
 	private final EventService eventService;
 	private final CompilationService compilationService;
+	private final CommentService commentService;
 
 	public AdminControllers(UserService userService, CategoryService categoryService,
-	                       EventService eventService, CompilationService compilationService) {
+	                       EventService eventService, CompilationService compilationService,
+	                       CommentService commentService) {
 		this.userService = userService;
 		this.categoryService = categoryService;
 		this.eventService = eventService;
 		this.compilationService = compilationService;
+		this.commentService = commentService;
 	}
 
 	@PostMapping("/categories")
@@ -110,6 +116,21 @@ public class AdminControllers {
 	public ResponseEntity<Void> deleteUser(@PathVariable("userId") Long userId) {
 		userService.deleteUser(userId);
 		return ResponseEntity.noContent().build();
+	}
+
+	@GetMapping("/comments")
+	public List<CommentDto> getComments(@RequestParam(value = "eventId", required = false) Long eventId,
+	                                    @RequestParam(value = "authorId", required = false) Long authorId,
+	                                    @RequestParam(value = "status", required = false) String status,
+	                                    @RequestParam(value = "from", defaultValue = "0") Integer from,
+	                                    @RequestParam(value = "size", defaultValue = "10") Integer size) {
+		return commentService.getAdminComments(eventId, authorId, status, from, size);
+	}
+
+	@PatchMapping("/comments/{commentId}")
+	public ResponseEntity<CommentDto> moderateComment(@PathVariable("commentId") Long commentId,
+	                                                  @Valid @RequestBody ModerateCommentRequest req) {
+		return ResponseEntity.ok(commentService.moderateComment(commentId, req));
 	}
 }
 
