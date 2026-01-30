@@ -9,9 +9,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import ru.practicum.main.dto.CategoryDto;
 import ru.practicum.main.dto.CompilationDto;
+import ru.practicum.main.dto.CommentDto;
 import ru.practicum.main.dto.EventFullDto;
 import ru.practicum.main.dto.EventShortDto;
 import ru.practicum.main.service.CategoryService;
+import ru.practicum.main.service.CommentService;
 import ru.practicum.main.service.CompilationService;
 import ru.practicum.main.service.EventService;
 
@@ -21,12 +23,14 @@ public class PublicControllers {
 	private final CategoryService categoryService;
 	private final CompilationService compilationService;
 	private final EventService eventService;
+	private final CommentService commentService;
 
 	public PublicControllers(CategoryService categoryService, CompilationService compilationService,
-	                         EventService eventService) {
+	                         EventService eventService, CommentService commentService) {
 		this.categoryService = categoryService;
 		this.compilationService = compilationService;
 		this.eventService = eventService;
+		this.commentService = commentService;
 	}
 
 	@GetMapping("/categories")
@@ -68,6 +72,13 @@ public class PublicControllers {
 	@GetMapping("/events/{id}")
 	public ResponseEntity<EventFullDto> getEvent(@PathVariable("id") Long id) {
 		return ResponseEntity.ok(eventService.getPublicEvent(id));
+	}
+
+	@GetMapping("/events/{eventId}/comments")
+	public List<CommentDto> getEventComments(@PathVariable("eventId") Long eventId,
+	                                         @RequestParam(value = "from", defaultValue = "0") Integer from,
+	                                         @RequestParam(value = "size", defaultValue = "10") Integer size) {
+		return commentService.getPublicComments(eventId, from, size);
 	}
 }
 

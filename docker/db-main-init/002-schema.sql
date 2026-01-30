@@ -57,6 +57,19 @@ CREATE TABLE IF NOT EXISTS compilation_events (
     CONSTRAINT fk_compilation_event_event FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS comments (
+    id BIGSERIAL PRIMARY KEY,
+    event_id BIGINT NOT NULL,
+    author_id BIGINT NOT NULL,
+    text VARCHAR(2000) NOT NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'PENDING',
+    created_on TIMESTAMP NOT NULL,
+    updated_on TIMESTAMP,
+    moderated_on TIMESTAMP,
+    CONSTRAINT fk_comment_event FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE,
+    CONSTRAINT fk_comment_author FOREIGN KEY (author_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
 CREATE INDEX IF NOT EXISTS idx_event_category ON events(category_id);
 CREATE INDEX IF NOT EXISTS idx_event_initiator ON events(initiator_id);
 CREATE INDEX IF NOT EXISTS idx_event_state ON events(state);
@@ -64,3 +77,6 @@ CREATE INDEX IF NOT EXISTS idx_event_date ON events(event_date);
 CREATE INDEX IF NOT EXISTS idx_request_event ON participation_requests(event_id);
 CREATE INDEX IF NOT EXISTS idx_request_requester ON participation_requests(requester_id);
 CREATE INDEX IF NOT EXISTS idx_request_status ON participation_requests(status);
+CREATE INDEX IF NOT EXISTS idx_comment_event ON comments(event_id);
+CREATE INDEX IF NOT EXISTS idx_comment_author ON comments(author_id);
+CREATE INDEX IF NOT EXISTS idx_comment_status ON comments(status);

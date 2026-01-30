@@ -1,0 +1,200 @@
+{
+  "info": {
+    "_postman_id": "b6a9f7d4-7b7e-4cc3-9d45-5a0c2b7b3f10",
+    "name": "Explore With Me - Feature: Comments",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080" },
+    { "key": "userId", "value": "" },
+    { "key": "catId", "value": "" },
+    { "key": "eventId", "value": "" },
+    { "key": "commentId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Setup / Create user",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": { "raw": "{{baseUrl}}/admin/users", "host": ["{{baseUrl}}"], "path": ["admin", "users"] },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"commenter1@test.com\",\n  \"name\": \"Commenter One\"\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('201 Created', function () { pm.response.to.have.status(201); });",
+              "var json = pm.response.json();",
+              "pm.collectionVariables.set('userId', json.id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Setup / Create category",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": { "raw": "{{baseUrl}}/admin/categories", "host": ["{{baseUrl}}"], "path": ["admin", "categories"] },
+        "body": { "mode": "raw", "raw": "{\n  \"name\": \"CommentsCat\"\n}" }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('201 Created', function () { pm.response.to.have.status(201); });",
+              "var json = pm.response.json();",
+              "pm.collectionVariables.set('catId', json.id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Setup / Create event (user)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": {
+          "raw": "{{baseUrl}}/users/{{userId}}/events",
+          "host": ["{{baseUrl}}"],
+          "path": ["users", "{{userId}}", "events"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"annotation\": \"This is an annotation long enough.\",\n  \"category\": {{catId}},\n  \"description\": \"This is a description long enough for the event creation.\",\n  \"eventDate\": \"2099-01-01 10:00:00\",\n  \"location\": {\"lat\": 55.75, \"lon\": 37.61},\n  \"paid\": false,\n  \"participantLimit\": 0,\n  \"requestModeration\": true,\n  \"title\": \"Event with comments\"\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('201 Created', function () { pm.response.to.have.status(201); });",
+              "var json = pm.response.json();",
+              "pm.collectionVariables.set('eventId', json.id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Setup / Publish event (admin)",
+      "request": {
+        "method": "PATCH",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": {
+          "raw": "{{baseUrl}}/admin/events/{{eventId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["admin", "events", "{{eventId}}"]
+        },
+        "body": { "mode": "raw", "raw": "{\n  \"stateAction\": \"PUBLISH_EVENT\"\n}" }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": { "exec": ["pm.test('200 OK', function () { pm.response.to.have.status(200); });"] }
+        }
+      ]
+    },
+    {
+      "name": "Comments / Add comment (user)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": {
+          "raw": "{{baseUrl}}/users/{{userId}}/events/{{eventId}}/comments",
+          "host": ["{{baseUrl}}"],
+          "path": ["users", "{{userId}}", "events", "{{eventId}}", "comments"]
+        },
+        "body": { "mode": "raw", "raw": "{\n  \"text\": \"First comment\"\n}" }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('201 Created', function () { pm.response.to.have.status(201); });",
+              "var json = pm.response.json();",
+              "pm.collectionVariables.set('commentId', json.id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Comments / Moderate comment (admin publish)",
+      "request": {
+        "method": "PATCH",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": {
+          "raw": "{{baseUrl}}/admin/comments/{{commentId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["admin", "comments", "{{commentId}}"]
+        },
+        "body": { "mode": "raw", "raw": "{\n  \"action\": \"PUBLISH\"\n}" }
+      },
+      "event": [
+        { "listen": "test", "script": { "exec": ["pm.test('200 OK', function () { pm.response.to.have.status(200); });"] } }
+      ]
+    },
+    {
+      "name": "Comments / Get public comments for event",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/events/{{eventId}}/comments?from=0&size=10",
+          "host": ["{{baseUrl}}"],
+          "path": ["events", "{{eventId}}", "comments"],
+          "query": [
+            { "key": "from", "value": "0" },
+            { "key": "size", "value": "10" }
+          ]
+        }
+      },
+      "event": [
+        { "listen": "test", "script": { "exec": ["pm.test('200 OK', function () { pm.response.to.have.status(200); });"] } }
+      ]
+    },
+    {
+      "name": "Comments / Update comment (user)",
+      "request": {
+        "method": "PATCH",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": {
+          "raw": "{{baseUrl}}/users/{{userId}}/comments/{{commentId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["users", "{{userId}}", "comments", "{{commentId}}"]
+        },
+        "body": { "mode": "raw", "raw": "{\n  \"text\": \"Edited comment\"\n}" }
+      },
+      "event": [
+        { "listen": "test", "script": { "exec": ["pm.test('200 OK', function () { pm.response.to.have.status(200); });"] } }
+      ]
+    },
+    {
+      "name": "Comments / Invalid create comment (400)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": {
+          "raw": "{{baseUrl}}/users/{{userId}}/events/{{eventId}}/comments",
+          "host": ["{{baseUrl}}"],
+          "path": ["users", "{{userId}}", "events", "{{eventId}}", "comments"]
+        },
+        "body": { "mode": "raw", "raw": "{\n  \"text\": \"\"\n}" }
+      },
+      "event": [
+        { "listen": "test", "script": { "exec": ["pm.test('400 Bad Request', function () { pm.response.to.have.status(400); });"] } }
+      ]
+    }
+  ]
+}
+
